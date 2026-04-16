@@ -195,6 +195,8 @@ But solving it offline provided deeper system-level understanding.
   ```bash
   sudo dkms autoinstall
   ```
+  
+---
 
 ## 🧩 Adapting This for Other Systems (WSL Method)
 
