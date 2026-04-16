@@ -196,6 +196,166 @@ But solving it offline provided deeper system-level understanding.
   sudo dkms autoinstall
   ```
 
+## 🧩 Adapting This for Other Systems (WSL Method)
+
+This bundle is **kernel-specific** (`6.14.0-37-generic`), which means it will not work universally across all systems.
+
+However, you can **recreate a compatible offline bundle for *your own system*** using Windows Subsystem for Linux (WSL).
+
+---
+
+## 💻 Why Use WSL?
+
+Windows Subsystem for Linux allows you to run a full Linux environment inside Windows.
+
+This is useful because:
+
+* You can match the exact Ubuntu version your target machine uses
+* You can download packages *with all dependencies automatically*
+* You avoid manual dependency hunting
+
+---
+
+## ⚙️ Step-by-Step: Rebuilding the Bundle for Your System
+
+### 1. Install Ubuntu in WSL
+
+Open PowerShell and run:
+
+```bash
+wsl --install -d Ubuntu-24.04
+```
+
+Launch it after installation completes.
+
+---
+
+### 2. Prepare a working directory
+
+```bash
+mkdir ~/wireless-driver
+cd ~/wireless-driver
+```
+
+---
+
+### 3. Update package lists
+
+```bash
+sudo apt update
+```
+
+---
+
+### 4. Download required packages
+
+Replace the kernel version with your own:
+
+```bash
+apt download bcmwl-kernel-source dkms build-essential linux-headers-$(uname -r)
+```
+
+---
+
+### 5. Download all dependencies automatically
+
+Install helper tool:
+
+```bash
+sudo apt install apt-rdepends -y
+```
+
+Then run:
+
+```bash
+apt-rdepends bcmwl-kernel-source dkms build-essential linux-headers-$(uname -r) \
+| grep -v "^ " \
+| sort -u \
+| grep -vE "libc-dev|kldutils" \
+| xargs -n 1 apt download
+```
+
+This will download:
+
+* Compiler toolchain (`gcc`, `make`)
+* Kernel headers
+* All required libraries
+* Every dependency needed for offline installation
+
+---
+
+### 6. Transfer to USB
+
+Your files will be located at:
+
+```
+\\wsl$\Ubuntu-24.04\home\<your-username>\wireless-driver
+```
+
+Copy this folder to a USB drive.
+
+---
+
+### 7. Install on target Linux machine
+
+On the offline system:
+
+```bash
+cd ~/wireless-driver
+sudo dpkg -i *.deb
+sudo apt --fix-broken install
+```
+
+Then load the driver:
+
+```bash
+sudo modprobe wl
+```
+
+Reboot:
+
+```bash
+sudo reboot
+```
+
+---
+
+## 🧠 Key Takeaways
+
+* The **kernel version determines everything**
+* WSL lets you **mirror the exact environment** needed
+* This approach scales to:
+
+  * Different kernel versions
+  * Different Ubuntu/Mint releases
+  * Other offline driver or package installs
+
+---
+
+## 🚀 When to Use This Approach
+
+Use this method when:
+
+* You don’t have internet access on the target machine
+* USB tethering isn’t available
+* You want a **repeatable, portable install bundle**
+
+---
+
+## ⚠️ Notes
+
+* Always verify kernel version with:
+
+  ```bash
+  uname -r
+  ```
+* Ensure WSL Ubuntu version matches your target system (e.g., 22.04 vs 24.04)
+* Regenerate the bundle if your kernel changes
+
+---
+
+This turns a one-time fix into a **reusable offline installation workflow** for Linux systems.
+
 ---
 
 ## 🙌 Final Thoughts
